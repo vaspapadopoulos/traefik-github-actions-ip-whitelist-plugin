@@ -1,0 +1,15 @@
+---
+displayName: Github Actions IP Whitelist Plugin
+type: middleware
+
+import: github.com/vaspapadopoulos/traefik-github-actions-ip-whitelist-plugin
+
+summary: >
+  A middleware plugin for Traefik that whitelists TCP connections from Github
+  Actions or other specified addresses.
+
+testData:
+  additionalCIDRs:
+    - "13.67.144.0/21"
+    - "13.67.152.0/24"
+    - "13.67.153.0/28"
