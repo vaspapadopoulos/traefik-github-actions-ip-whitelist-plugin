@@ -83,7 +83,7 @@ func (wl *GithubActionWhitelist) ServeTCP(conn TcpWriteCloser) {
 		if err != nil {
 			log.Printf("Skipping CIDR %s", cidr)
 		} else if ipnet.Contains(net.ParseIP(addr)) {
-			log.Printf("Source address originates Github Actions", addr)
+			log.Printf("Source address originates Github Actions %s", addr)
 			wl.next.ServeTCP(conn)
 		}
 	}
@@ -93,7 +93,7 @@ func (wl *GithubActionWhitelist) ServeTCP(conn TcpWriteCloser) {
 		if err != nil {
 			log.Printf("Skipping CIDR %s", cidr)
 		} else if ipnet.Contains(net.ParseIP(addr)) {
-			log.Printf("Source address originates from allowed CIDRs", addr)
+			log.Printf("Source address originates from allowed CIDRs %", addr)
 			wl.next.ServeTCP(conn)
 		}
 	}
