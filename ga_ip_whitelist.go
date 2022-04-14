@@ -4,9 +4,7 @@ package traefik_github_actions_ip_whitelist_plugin
 import (
 	"context"
 	"encoding/json"
-	"github.com/traefik/traefik/v2/pkg/log"
-	"github.com/traefik/traefik/v2/pkg/middlewares"
-	"github.com/traefik/traefik/v2/pkg/tcp"
+	"log"
 	"net"
 	"net/http"
 )
@@ -27,36 +25,47 @@ func CreateConfig() *Config {
 
 // GithubActionWhitelist a Github Action IP Whitelist plugin.
 type GithubActionWhitelist struct {
-	next        tcp.Handler
+	next        TcpHandler
 	name        string
 	additionalCIDRs []string
 }
 
 // New creates a new Github Action IP Whitelist plugin.
-func New(ctx context.Context, next tcp.Handler, config *Config, name string) (tcp.Handler, error) {
+func New(ctx context.Context, next TcpHandler, config *Config, name string) (TcpHandler, error) {
 	return &GithubActionWhitelist{}, nil
+}
+
+// TcpHandler is the TCP Handlers interface.
+type TcpHandler interface {
+	ServeTCP(conn TcpWriteCloser)
+}
+
+// TcpWriteCloser describes a net.Conn with a CloseWrite method.
+type TcpWriteCloser interface {
+	net.Conn
+	// CloseWrite on a network connection, indicates that the issuer of the call
+	// has terminated sending on that connection.
+	// It corresponds to sending a FIN packet.
+	CloseWrite() error
 }
 
 type GithubMetaResponse struct {
 	Actions []string
 }
 
-func (wl *GithubActionWhitelist) ServeTCP(conn tcp.WriteCloser) {
-	ctx := middlewares.GetLoggerCtx(context.Background(), wl.name, typeName)
-	logger := log.FromContext(ctx)
-
+func (wl *GithubActionWhitelist) ServeTCP(conn TcpWriteCloser) {
 	addr := conn.RemoteAddr().String()
 
 	req, err := http.NewRequest("GET", "https://api.github.com/meta", nil)
 	if err != nil {
-		logger.Error("Error preparing request to https://api.github.com/meta")
+		log.Print("Error preparing request to https://api.github.com/meta")
 		conn.Close()
 		return
 	}
 	client := http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Error connecting to https://api.github.com/meta")
+		log.Print("Error connecting to https://api.github.com/meta")
 		conn.Close()
 		return
 	}
@@ -64,7 +73,7 @@ func (wl *GithubActionWhitelist) ServeTCP(conn tcp.WriteCloser) {
 	var meta GithubMetaResponse
 	err = json.NewDecoder(resp.Body).Decode(&meta)
 	if err != nil {
-		logger.Error("Error parsing response from https://api.github.com/meta")
+		log.Print("Error parsing response from https://api.github.com/meta")
 		conn.Close()
 		return
 	}
@@ -72,9 +81,9 @@ func (wl *GithubActionWhitelist) ServeTCP(conn tcp.WriteCloser) {
 	for _, cidr := range meta.Actions {
 		_, ipnet, err := net.ParseCIDR(cidr)
 		if err != nil {
-			logger.Warnf("Skipping CIDR %s", cidr)
+			log.Printf("Skipping CIDR %s", cidr)
 		} else if ipnet.Contains(net.ParseIP(addr)) {
-			logger.Debugf("Source address originates Github Actions", addr)
+			log.Printf("Source address originates Github Actions %s", addr)
 			wl.next.ServeTCP(conn)
 		}
 	}
@@ -82,14 +91,14 @@ func (wl *GithubActionWhitelist) ServeTCP(conn tcp.WriteCloser) {
 	for _, cidr := range wl.additionalCIDRs {
 		_, ipnet, err := net.ParseCIDR(cidr)
 		if err != nil {
-			logger.Warnf("Skipping CIDR %s", cidr)
+			log.Printf("Skipping CIDR %s", cidr)
 		} else if ipnet.Contains(net.ParseIP(addr)) {
-			logger.Debugf("Source address originates from allowed CIDRs", addr)
+			log.Printf("Source address originates from allowed CIDRs %s", addr)
 			wl.next.ServeTCP(conn)
 		}
 	}
 
-	logger.Warnf("Source address is not allowed %s", addr)
+	log.Printf("Source address is not allowed %s", addr)
 	conn.Close()
 	return
 }
