@@ -13,12 +13,12 @@ automatically retrieved from the
 ```yaml
 testData:
   additionalCIDRs:
-    - "13.67.144.0/21"
-    - "13.67.152.0/24"
-    - "13.67.153.0/28"
+    - 13.67.144.0/21
+    - 13.67.152.0/24
+    - 13.67.153.0/28
 ```
 
-- `additionalCIDRs` additional CIDRs to be added in the whitelist 
+- `additionalCIDRs` additional CIDRs to be added in the whitelist
 
 ### Example configuration
 
@@ -49,9 +49,9 @@ tcp:
       plugin:
         github-actions-ip-whitelist:
           additionalCIDRs:
-            - "13.67.144.0/21"
-            - "13.67.152.0/24"
-            - "13.67.153.0/28"
+            - 13.67.144.0/21
+            - 13.67.152.0/24
+            - 13.67.153.0/28
   services:
     my-service:
       loadBalancer:
