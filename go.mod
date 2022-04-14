@@ -1,3 +1,3 @@
-module github.com/vaspapadopoulos/traefik_github_actions_ip_whitelist_plugin
+module github.com/vaspapadopoulos/traefik-github-actions-ip-whitelist-plugin
 
 go 1.17
