@@ -50,7 +50,7 @@ type TcpWriteCloser interface {
 }
 
 type GithubMetaResponse struct {
-	Actions []string
+	Actions []string `json:"enabled,omitempty"`
 }
 
 func (wl *GithubActionWhitelist) ServeTCP(conn TcpWriteCloser) {
